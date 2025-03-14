@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blockchain Agent Chat</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background-color: #1652f0;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .connected {
+            background-color: #4caf50;
+        }
+        
+        .disconnected {
+            background-color: #f44336;
+        }
+        
+        .connecting {
+            background-color: #ff9800;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .chat-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            position: relative;
+            line-height: 1.5;
+        }
+        
+        .user-message {
+            background-color: #e9f5ff;
+            color: #0a2540;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .agent-message {
+            background-color: #f0f2f5;
+            color: #0a2540;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .system-message {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            font-style: italic;
+            align-self: center;
+            max-width: 90%;
+            text-align: center;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+        
+        .error-message {
+            background-color: #fff5f5;
+            color: #e53e3e;
+            border: 1px solid #f8d7da;
+            align-self: center;
+            max-width: 90%;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            padding: 15px;
+            align-items: center;
+            color: #6c757d;
+        }
+        
+        .typing-dots {
+            display: flex;
+            margin-left: 10px;
+        }
+        
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #6c757d;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: typing-dot 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+            margin-right: 0;
+        }
+        
+        @keyframes typing-dot {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+        
+        .input-container {
+            display: flex;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #e4e7eb;
+        }
+        
+        .message-input {
+            flex: 1;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        
+        .message-input:focus {
+            border-color: #1652f0;
+        }
+        
+        .send-button {
+            background-color: #1652f0;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            margin-left: 10px;
+            padding: 0 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+        
+        .send-button:hover {
+            background-color: #0b41d8;
+        }
+        
+        .send-button:disabled {
+            background-color: #a0aec0;
+            cursor: not-allowed;
+        }
+        
+        .wallet-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .network-badge {
+            background-color: #e9f5ff;
+            color: #1652f0;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 5px 0;
+            font-family: monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+        
+        code {
+            font-family: monospace;
+            background-color: #f6f8fa;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .logo {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Coinbase Blockchain Agent</div>
+        <div class="connection-status">
+            <div class="status-indicator disconnected" id="status-indicator"></div>
+            <span id="connection-text">Disconnected</span>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div id="wallet-info" class="wallet-info hidden">
+            <div>
+                <strong>Wallet Address:</strong> <span id="wallet-address">-</span>
+            </div>
+            <div class="network-badge" id="network-badge">base-sepolia</div>
+        </div>
+        
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <div class="message system-message">
+                    Welcome to the Blockchain Agent! I can help you interact with the blockchain and execute transactions.
+                </div>
+            </div>
+            
+            <div id="typing-indicator" class="typing-indicator hidden">
+                <span>Agent is typing</span>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <input type="text" id="message-input" class="message-input" placeholder="Type your message..." autocomplete="off">
+                <button id="send-button" class="send-button" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // DOM Elements
+        const messagesContainer = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const statusIndicator = document.getElementById('status-indicator');
+        const connectionText = document.getElementById('connection-text');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const walletInfo = document.getElementById('wallet-info');
+        const walletAddress = document.getElementById('wallet-address');
+        const networkBadge = document.getElementById('network-badge');
+        
+        // Socket connection
+        const socket = io();
+        let sessionActive = false;
+        
+        // Connection status handling
+        socket.on('connect', () => {
+            statusIndicator.classList.remove('disconnected', 'connecting');
+            statusIndicator.classList.add('connected');
+            connectionText.textContent = 'Connected';
+            sendButton.disabled = false;
+            
+            // Add system message for connection
+            addMessage('system', 'Connected to the blockchain agent. How can I help you today?');
+        });
+        
+        socket.on('disconnect', () => {
+            statusIndicator.classList.remove('connected', 'connecting');
+            statusIndicator.classList.add('disconnected');
+            connectionText.textContent = 'Disconnected';
+            sendButton.disabled = true;
+            
+            // Add system message for disconnection
+            addMessage('system', 'Disconnected from the server. Please wait while we try to reconnect...');
+        });
+        
+        socket.on('connect_error', () => {
+            statusIndicator.classList.remove('connected');
+            statusIndicator.classList.add('connecting');
+            connectionText.textContent = 'Connecting...';
+            sendButton.disabled = true;
+        });
+        
+        // Message handling
+        socket.on('response', (data) => {
+            // Hide typing indicator
+            typingIndicator.classList.add('hidden');
+            
+            // Display the agent's response
+            addMessage('agent', data.content);
+            
+            // Check for wallet address in response
+            checkForWalletInfo(data.content);
+            
+            // Scroll to bottom
+            scrollToBottom();
+        });
+        
+        socket.on('error', (error) => {
+            // Hide typing indicator
+            typingIndicator.classList.add('hidden');
+            
+            // Display the error
+            addMessage('error', `Error: ${error.message}`);
+            
+            // Scroll to bottom
+            scrollToBottom();
+        });
+        
+        // Send message on button click
+        sendButton.addEventListener('click', sendMessage);
+        
+        // Send message on Enter key
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Enable send button when input has text
+        messageInput.addEventListener('input', () => {
+            sendButton.disabled = !messageInput.value.trim() || !socket.connected;
+        });
+        
+        // Helper function to send a message
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message || !socket.connected) return;
+            
+            // Display user message
+            addMessage('user', message);
+            
+            // Clear input
+            messageInput.value = '';
+            sendButton.disabled = true;
+            
+            // Show typing indicator
+            typingIndicator.classList.remove('hidden');
+            
+            // Send to server
+            socket.emit('message', message);
+            
+            // Scroll to bottom
+            scrollToBottom();
+        }
+        
+        // Helper function to add a message to the chat
+        function addMessage(type, content) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            
+            switch (type) {
+                case 'user':
+                    messageElement.classList.add('user-message');
+                    break;
+                case 'agent':
+                    messageElement.classList.add('agent-message');
+                    break;
+                case 'system':
+                    messageElement.classList.add('system-message');
+                    break;
+                case 'error':
+                    messageElement.classList.add('error-message');
+                    break;
+            }
+            
+            // Process markdown-like code blocks
+            content = processCodeBlocks(content);
+            
+            messageElement.innerHTML = content;
+            messagesContainer.appendChild(messageElement);
+        }
+        
+        // Helper function to process code blocks with ```
+        function processCodeBlocks(content) {
+            // Replace code blocks
+            content = content.replace(/```(\w+)?\s*([\s\S]*?)```/g, function(match, language, code) {
+                return `<pre><code>${escapeHtml(code.trim())}</code></pre>`;
+            });
+            
+            // Replace inline code
+            content = content.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Process line breaks
+            content = content.replace(/\n/g, '<br>');
+            
+            return content;
+        }
+        
+        // Helper function to escape HTML
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+        
+        // Helper function to scroll to the bottom of the messages
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+        
+        // Helper function to check for wallet information in messages
+        function checkForWalletInfo(content) {
+            // Simple regex to find Ethereum/blockchain addresses
+            const addressRegex = /0x[a-fA-F0-9]{40}/;
+            const match = content.match(addressRegex);
+            
+            if (match) {
+                // Display wallet info section
+                walletInfo.classList.remove('hidden');
+                walletAddress.textContent = match[0];
+                
+                // Get network from content if available
+                const networks = ['mainnet', 'ethereum', 'base', 'base-sepolia', 'optimism', 'arbitrum'];
+                for (const network of networks) {
+                    if (content.toLowerCase().includes(network)) {
+                        networkBadge.textContent = network;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Initialize chat
+        function initChat() {
+            // Add welcome message
+            addMessage('system', 'Connect your wallet to start interacting with the blockchain.');
+            
+            // Focus on input
+            messageInput.focus();
+            
+            // Scroll to bottom
+            scrollToBottom();
+        }
+        
+        // Start the chat when page is loaded
+        document.addEventListener('DOMContentLoaded', initChat);
+        
+        // Reconnection handling
+        socket.io.on('reconnect_attempt', () => {
+            statusIndicator.classList.remove('connected', 'disconnected');
+            statusIndicator.classList.add('connecting');
+            connectionText.textContent = 'Reconnecting...';
+            addMessage('system', 'Attempting to reconnect...');
+        });
+        
+        socket.io.on('reconnect', () => {
+            addMessage('system', 'Reconnected successfully!');
+        });
+        
+        // Handle transaction events
+        socket.on('transaction_pending', (txHash) => {
+            addMessage('system', `Transaction submitted: ${txHash}`);
+            addMessage('system', 'Transaction is pending. Please wait...');
+        });
+        
+        socket.on('transaction_success', (txHash) => {
+            addMessage('system', `Transaction successful! Hash: ${txHash}`);
+        });
+        
+        socket.on('transaction_failed', (error) => {
+            addMessage('error', `Transaction failed: ${error.message}`);
+        });
+    </script>
+</body>
+</html>
