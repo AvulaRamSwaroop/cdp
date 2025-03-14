@@ -7,6 +7,7 @@ import {
   cdpApiActionProvider,
   cdpWalletActionProvider,
   pythActionProvider,
+  erc721ActionProvider,
 } from "@coinbase/agentkit";
 
 import { getLangChainTools } from "@coinbase/agentkit-langchain";
@@ -78,6 +79,9 @@ async function initializeAgent() {
       cdpWalletData: walletDataStr || undefined,
       networkId: process.env.NETWORK_ID || "base-sepolia",
     };
+    const erc721 = erc721ActionProvider();
+    const pyth = pythActionProvider();
+
     const walletProvider = await CdpWalletProvider.configureWithWallet(config);
 
     const agentkit = await AgentKit.from({
