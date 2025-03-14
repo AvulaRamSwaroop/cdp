@@ -3,4 +3,6 @@ wallet_data.txt
 node_modules
 .vscode
 test
+wallet_data_base_sepolia.txt
+wallet_data_ethereum_sepolia.txt
 .gitignore
