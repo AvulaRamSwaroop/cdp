@@ -1,0 +1,5 @@
+.env
+wallet_data.txt
+node_modules
+.vscode
+test
